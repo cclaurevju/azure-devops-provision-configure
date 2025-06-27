@@ -1,0 +1,7 @@
+- name: Configure Windows Server
+  hosts: windows
+  tasks:
+    - name: Enable IIS
+      XXXXXXXX:
+        xxxx: 
+        xxxx: 

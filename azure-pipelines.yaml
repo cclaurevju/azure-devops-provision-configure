@@ -1,0 +1,35 @@
+trigger:
+  branches:
+    include: [main]
+
+variables:
+  TF_VAR_admin_username: "ansibleuser"
+  TF_VAR_admin_password: "$(vmPassword)"
+
+pool:
+  vmImage: "ubuntu-latest"
+
+stages:
+  - stage: Provision
+    jobs:
+      - job: TerraformApply
+        steps:
+          - checkout: self
+          - script: |
+              cd terraform
+              terraform init
+              terraform apply -auto-approve
+            env:
+              TF_VAR_admin_username: $(TF_VAR_admin_username)
+              TF_VAR_admin_password: $(TF_VAR_admin_password)
+
+  - stage: Configure
+    dependsOn: Provision
+    jobs:
+      - job: AnsibleConfigure
+        steps:
+          - script: |
+              pip install ansible pywinrm
+              IP=$(terraform -chdir=terraform output -raw vm_ip)
+              echo -e "[windows]\n$IP\n\n[windows:vars]\nansible_user=$(TF_VAR_admin_username)\nansible_password=$(TF_VAR_admin_password)\nansible_connection=winrm\nansible_winrm_transport=basic\nansible_winrm_server_cert_validation=ignore" > inventory.ini
+              ansible-playbook -i inventory.ini ansible/playbook.yaml
