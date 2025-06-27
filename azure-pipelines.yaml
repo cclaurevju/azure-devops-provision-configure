@@ -1,6 +1,6 @@
 trigger:
   branches:
-    include: [main]
+    include: [final]
 
 variables:
   TF_VAR_admin_username: "ansibleuser"
